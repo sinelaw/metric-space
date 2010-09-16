@@ -1,0 +1,22 @@
+Name:                metric-space
+Version:             0.0.0
+Cabal-Version:       >= 1.2
+Synopsis:            Metric spaces
+Category:            math
+Description:         Provides classes and instances for metric spaces
+Author:              Noam Lewis
+Maintainer:          jones.noamle@gmail.com
+Homepage:            
+Copyright:           (c) 2010, Noam Lewis
+License:             BSD3
+Stability:           experimental
+build-type:          Simple
+
+Library
+  hs-Source-Dirs:      src
+  Extensions:          
+  Build-Depends:       base<5
+  Exposed-Modules:     
+                     Data.MetricSpace
+  ghc-options:         -Wall -O2
+  ghc-prof-options:    -prof -auto-all 
