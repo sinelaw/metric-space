@@ -1,0 +1,5 @@
+Problems:
+
+I'd like VectorSpaces to automatically be MetricSpaces with distance x y = magnitude (x-y)
+but due to overlapping instances / undeicdable instancse that's not possible? Currently I use
+extensions to overcome this, but maybe the way I'm doing it is also wrong!
