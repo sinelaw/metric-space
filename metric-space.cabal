@@ -18,5 +18,6 @@ Library
   Build-Depends:       base<5
   Exposed-Modules:     
                      Data.MetricSpace
+                     Data.SetOf
   ghc-options:         -Wall -O2
   ghc-prof-options:    -prof -auto-all 

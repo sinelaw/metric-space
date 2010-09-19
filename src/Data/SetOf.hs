@@ -1,29 +1,29 @@
-module SetOf where
+module Data.SetOf where
 
 import Control.Applicative
 import Data.Monoid
 
-import Prelude hiding(null,map)
--- Semantic function on SetOf is 'flip member': a set is
--- completely determined by knowing, for every value, whether it
--- is or isn't in the set.
+import Prelude hiding(null,map,filter)
+-- Semantic function on SetOf is 'flip member': a set is completely determined by knowing, for every value, whether it is or
+-- isn't in the set.
 --
 -- 'flip member' has type: s a -> a -> Bool
 --
--- The following lists the ZFC axioms (from MathWorld, see
--- http://mathworld.wolfram.com/Zermelo-FraenkelAxioms.html)
--- expressed using member:
+-- The following lists the ZFC axioms (from MathWorld, see http://mathworld.wolfram.com/Zermelo-FraenkelAxioms.html)
+-- expressed using member (or rather, flip member):
 --
--- 1. Extensionality: Two sets are equal if they have the same elements 
---       - this also somehow implies the converse (see wikipedia): 
---         two sets have the same elements if the two sets are equal.
---                    
+-- 1. Extensionality: Two sets are equal if they have the same elements.
+--
+--                    In our terms: if they have equal 'member' functions. This fact is expressed in the Eq instance of SetOf
+--                    below.
+--
+--       - this also somehow implies the converse (see wikipedia): two sets have the same elements if the two sets are equal.
 --
 -- 2. Pairing: forall x y. exists p = (pair x y): (member x p) && (member y p)
 --
--- 3. Subsets: If P is a property, and Z a set, there exists a
--- subset Y of Z containing those elements of Z that satisfy
+-- 3. Subsets: If P is a property, and Z a set, there exists a subset Y of Z containing those elements of Z that satisfy
 -- property P.
+--
 --     forall z p. exists (filter z p)
 --       Implies: null (because taking any set z, null = filter z (const false))
 --       aka. comprehension or separation
@@ -51,7 +51,7 @@ import Prelude hiding(null,map)
 -- 9. Choice: forall x :: SetOf (SetOf a). exists (choice x)  = forall m :: SetOf a, (m `member` x). exists n :: a, (n `member` m). n `member` (choice x)
 --    - how to implement this?
 
-class SetOf s a where
+class SetOf s where
   -- defining property of sets, the semantic function 
   member :: a -> s a -> Bool
   
@@ -65,32 +65,33 @@ class SetOf s a where
   -- "(flip member u)" = (flip member a) || (flip member b)
   union :: s a -> s a -> s a
 
-  -- this can only exist for countable, computably enumerable sets - not all sets!
-  fold :: (a->b->b) -> b -> s a -> b
-  
   -- the intersection i of two sets a, b:
   -- "(flip member i)" = (flip member a) && (flip member b)
   intersection :: s a -> s a -> s a
 
   singleton :: a -> s a
 
+
 -- subset is implied by the existence of filter
 subset :: s a -> s a -> Bool
 subset subz z = subz == (filter z (flip member subz))
 
--- null is implied from the existence of filter. We can think of
--- null - using the semantic function (flip member) - as the
+-- null is implied from the existence of filter. We can think of null - using the semantic function (flip member) - as the
 -- function that maps all values to false, namely: (const false).
 null :: (SetOf s) => s a
-null = filter arbSet (const false)
-     -- arbSet can be any set, arbitrary choosing one that exists
-     -- from the axioms:
+null = filter arbSet (const False)
+     -- arbSet can be any set, arbitrary choosing one that exists from the axioms:
      where arbSet = pair () () 
+
+
+class EnumerableSetOf s where
+  -- this can only exist for countable, computably enumerable sets - not all sets!
+  fold :: (a->b->b) -> b -> s a -> b
 
 map :: (a->b) -> s a -> s b
 map f = fold (union . singleton . f)
 
-instance (SetOf (s a)) => Eq (s a) where
+instance (SetOf s) => Eq (s a) where
   -- equality is defined as equality of the 'flip member' functions
   sa == sb  =  (flip member $ sa) == (flip member $ sb)
 
@@ -102,20 +103,19 @@ instance (SetOf (s a)) => Monoid (s a) where
   mappend = union
   
   --mconcat :: [SetOf a] -> (SetOf a)
-  mconcat ss = foldr union null ss
+  mconcat = foldr mappend mempty
 
 
 instance Functor SetOf where
   --fmap :: (a->b) -> (SetOf a) -> (SetOf b)
   fmap = map
   
-instance Applicative SetOf where
+instance Applicative EnumerableSetOf where
   --pure :: a -> SetOf a
   pure = singleton
   
   -- apply every function in functions set a on every element in set of values
  -- (<*>) :: SetOf (a->b) -> SetOf a -> SetOf b
   sa <*> sb = fold (\f sb' -> (fmap f sb) `union` sb') null sa
-    
     
 
