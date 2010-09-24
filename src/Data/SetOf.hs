@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Data.SetOf where
 
 import Control.Applicative
@@ -71,51 +72,61 @@ class SetOf s where
 
   singleton :: a -> s a
 
-
--- subset is implied by the existence of filter
-subset :: s a -> s a -> Bool
-subset subz z = subz == (filter z (flip member subz))
+  
+  -- Haskell limits the type of the following 'mathematical' implementation of null,
+  -- so we include it in the typeclass
+  null :: s a
 
 -- null is implied from the existence of filter. We can think of null - using the semantic function (flip member) - as the
 -- function that maps all values to false, namely: (const false).
-null :: (SetOf s) => s a
-null = filter arbSet (const False)
-     -- arbSet can be any set, arbitrary choosing one that exists from the axioms:
-     where arbSet = pair () () 
+-- null :: (SetOf s) => s (Either () ())
+-- null = filter arbSet (const False)
+--      -- arbSet can be any set, arbitrary choosing one that exists from the axioms:
+--      where arbSet = pair () () 
 
 
 class EnumerableSetOf s where
   -- this can only exist for countable, computably enumerable sets - not all sets!
   fold :: (a->b->b) -> b -> s a -> b
 
-map :: (a->b) -> s a -> s b
-map f = fold (union . singleton . f)
-
-instance (SetOf s) => Eq (s a) where
-  -- equality is defined as equality of the 'flip member' functions
-  sa == sb  =  (flip member $ sa) == (flip member $ sb)
-
-instance (SetOf (s a)) => Monoid (s a) where
-  --mempty :: SetOf a
-  mempty = null
-  
-  --mappend :: (SetOf a) -> (SetOf a) -> (SetOf a)
-  mappend = union
-  
-  --mconcat :: [SetOf a] -> (SetOf a)
-  mconcat = foldr mappend mempty
+map :: (SetOf s2, EnumerableSetOf s1) => (a->b) -> s1 a -> s2 b
+map f = fold (union . singleton . f) null
 
 
-instance Functor SetOf where
-  --fmap :: (a->b) -> (SetOf a) -> (SetOf b)
-  fmap = map
+-- TODO: How do I implement instances for SetOf?
+
+-- subset is implied by the existence of filter, but requires the Eq instance
+--subset :: s a -> s a -> Bool
+--subset subz z = subz == (filter z (flip member subz))
+
+
+-- newtype SetOfWrap s = SetOfWrap { unSetOfWrap :: s }
+
+--instance (SetOf s) => Eq (SetOfWrap (s a)) where
+--  -- equality is defined as equality of the 'flip member' functions
+--  sa == sb  =  (flip member $ sa) == (flip member $ sb)
+
+-- instance (SetOf s) => Monoid (s a) where
+--   --mempty :: s a
+--   mempty = null
   
-instance Applicative EnumerableSetOf where
-  --pure :: a -> SetOf a
-  pure = singleton
+--   --mappend :: (s a) -> (s a) -> (s a)
+--   mappend = union
   
-  -- apply every function in functions set a on every element in set of values
- -- (<*>) :: SetOf (a->b) -> SetOf a -> SetOf b
-  sa <*> sb = fold (\f sb' -> (fmap f sb) `union` sb') null sa
+--   --mconcat :: [s a] -> (s a)
+--   mconcat = foldr mappend mempty
+
+
+-- instance (SetOf s) => Functor s where
+--   --fmap :: (a->b) -> (SetOf a) -> (SetOf b)
+--   fmap = map
+  
+-- instance (SetOf s) => Applicative s where
+--   --pure :: a -> SetOf a
+--   pure = singleton
+  
+--   -- apply every function in functions set a on every element in set of values
+--  -- (<*>) :: SetOf (a->b) -> SetOf a -> SetOf b
+--   sa <*> sb = fold (\f sb' -> (fmap f sb) `union` sb') null sa
     
 
